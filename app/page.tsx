@@ -26,13 +26,13 @@ type Menu = {
 };
 
 const menus: Menu[] = [
-  { title: "Sales",      desc: "Manajemen penjualan & pipeline.",   href: "https://sys1.siproper.com/", icon: TrendingUp },
-  { title: "Likuiditas", desc: "Arus kas & posisi likuiditas.",      href: "https://sys1.siproper.com/", icon: Wallet    },
-  { title: "Keuangan",   desc: "Akuntansi & pelaporan keuangan.",   href: "https://sys1.siproper.com/", icon: Landmark  },
-  { title: "Legal",      desc: "Kontrak, perizinan & kepatuhan.",   href: "https://sys2.siproper.com/", icon: Scale     },
-  { title: "Teknik",     desc: "Operasional & proyek teknik.",      href: "https://sys2.siproper.com/", icon: Wrench    },
-  { title: "HR",         desc: "Karyawan, absensi & payroll.",      href: "https://sys2.siproper.com/", icon: Users     },
-  { title: "Helpdesk",   desc: "Bantuan & pelaporan kendala.",      href: "https://help.siproper.com",  icon: LifeBuoy  },
+  { title: "Sales", desc: "Manajemen penjualan & pipeline.", href: "https://sys1.siproper.com/", icon: TrendingUp },
+  { title: "Likuiditas", desc: "Arus kas & posisi likuiditas.", href: "https://sys1.siproper.com/", icon: Wallet },
+  { title: "Keuangan", desc: "Akuntansi & pelaporan keuangan.", href: "https://sys1.siproper.com/", icon: Landmark },
+  { title: "Legal", desc: "Kontrak, perizinan & kepatuhan.", href: "https://sys2.siproper.com/admin", icon: Scale },
+  { title: "Teknik", desc: "Operasional & proyek teknik.", href: "https://sys2.siproper.com/admin", icon: Wrench },
+  { title: "HR", desc: "Karyawan, absensi & payroll.", href: "https://sys2.siproper.com/admin", icon: Users },
+  { title: "Helpdesk", desc: "Bantuan & pelaporan kendala.", href: "https://help.siproper.com", icon: LifeBuoy },
 ];
 
 export default function Home() {
