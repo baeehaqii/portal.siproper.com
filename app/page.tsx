@@ -1,14 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  TrendingUp,
-  Wallet,
-  Scale,
-  Wrench,
-  Landmark,
-  Users,
   LifeBuoy,
-  ArrowUpRight,
   ShieldCheck,
   Activity,
   HelpCircle,
@@ -16,26 +9,17 @@ import {
 } from "lucide-react";
 import Reveal from "./components/Reveal";
 import BrandMark from "./components/BrandMark";
-import ManualBookCard from "./components/ManualBookCard";
+import ModuleGrid from "./components/ModuleGrid";
+import { fetchAuthorization } from "@/lib/sso";
 
-type Menu = {
-  title: string;
-  desc: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-};
+export default async function Home() {
+  const authz = await fetchAuthorization();
+  const auth = {
+    authenticated: !!authz,
+    modules: authz?.modules ?? {},
+    roles: authz?.roles ?? [],
+  };
 
-const menus: Menu[] = [
-  { title: "Sales", desc: "Manajemen penjualan & pipeline.", href: "https://sys1.siproper.com/", icon: TrendingUp },
-  { title: "Likuiditas", desc: "Arus kas & posisi likuiditas.", href: "https://sys1.siproper.com/", icon: Wallet },
-  { title: "Keuangan", desc: "Akuntansi & pelaporan keuangan.", href: "https://sys1.siproper.com/", icon: Landmark },
-  { title: "Legal", desc: "Kontrak, perizinan & kepatuhan.", href: "https://sys2.siproper.com/admin", icon: Scale },
-  { title: "Teknik", desc: "Operasional & proyek teknik.", href: "https://sys2.siproper.com/admin", icon: Wrench },
-  { title: "HR", desc: "Karyawan, absensi & payroll.", href: "https://sys2.siproper.com/admin", icon: Users },
-  { title: "Helpdesk", desc: "Bantuan & pelaporan kendala.", href: "https://help.siproper.com", icon: LifeBuoy },
-];
-
-export default function Home() {
   return (
     <main className="relative">
       {/* NAVBAR */}
@@ -123,39 +107,8 @@ export default function Home() {
             <p className="mt-1 text-sm text-ink-500">Pilih modul untuk mulai bekerja.</p>
           </Reveal>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {menus.map((m, i) => {
-              const Icon = m.icon;
-              return (
-                <Reveal key={m.title} delay={i * 60}>
-                  <Link
-                    href={m.href}
-                    className="group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-ink-100 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:border-brand-200 hover:bg-brand-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-                  >
-                    <div className="flex items-start justify-between">
-                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors duration-200 group-hover:bg-brand-500 group-hover:text-white">
-                        <Icon className="h-5 w-5" strokeWidth={2} />
-                      </span>
-                    </div>
-                    <div className="mt-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-base font-semibold text-ink-900">{m.title}</h3>
-                        <ArrowUpRight
-                          className="h-4 w-4 text-ink-300 transition-colors duration-200 group-hover:text-brand-500"
-                          strokeWidth={2.25}
-                        />
-                      </div>
-                      <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{m.desc}</p>
-                    </div>
-                  </Link>
-                </Reveal>
-              );
-            })}
-            {/* Manual Book — modal trigger (client component) */}
-            <Reveal delay={menus.length * 60}>
-              <ManualBookCard />
-            </Reveal>
-          </div>
+          {/* Launcher: cards gate by role; click → login modal (SSO) → deep-link. */}
+          <ModuleGrid auth={auth} />
         </div>
       </section>
 

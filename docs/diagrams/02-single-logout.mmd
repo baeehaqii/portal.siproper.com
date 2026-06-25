@@ -1,0 +1,21 @@
+sequenceDiagram
+    autonumber
+    actor U as Browser (User)
+    participant P as Portal (BFF)
+    participant I as sys2 — IdP<br/>(auth.siproper.com)
+    participant S1 as sys1
+
+    U->>P: Klik "Logout"
+    note right of P: Revoke refresh token<br/>Hapus sesi Portal (Redis)
+    P-->>U: 302 → route logout IdP (custom)
+    U->>I: Ikuti redirect ke IdP
+    note right of I: Hapus cookie sesi IdP (.siproper.com)
+
+    rect rgb(255, 240, 240)
+    note over I,S1: Back-channel logout (CUSTOM, ditunda — bukan bawaan Passport)
+    I->>P: POST sinyal logout (invalidasi sesi Portal)
+    I->>S1: POST sinyal logout (invalidasi sesi sys1)
+    end
+
+    I-->>U: 302 → halaman "Anda telah keluar"
+    note over U,S1: Tanpa back-channel: sesi sys1 mati paling lambat<br/>saat access token expire (≤15 mnt)

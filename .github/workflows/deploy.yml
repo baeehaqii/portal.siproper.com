@@ -1,0 +1,25 @@
+name: Deploy Portal to prod
+
+# Push ke main → typecheck (gate) → trigger webhook deploy aaPanel.
+# aaPanel yang melakukan git pull + build + restart di server (lihat Webhook Script).
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit # gate: tipe rusak → batal deploy
+      - name: Trigger aaPanel deploy webhook
+        run: curl -fsS -k -X POST "$DEPLOY_HOOK"
+        env:
+          # Settings → Secrets and variables → Actions → New repository secret
+          # AAPANEL_DEPLOY_HOOK = Webhook URL penuh dari aaPanel (termasuk ?access_key=...)
+          DEPLOY_HOOK: ${{ secrets.AAPANEL_DEPLOY_HOOK }}

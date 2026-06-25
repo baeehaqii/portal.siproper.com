@@ -1,0 +1,24 @@
+flowchart TD
+    A([User klik modul / hit endpoint]) --> L1
+
+    subgraph L1box [Lapis 1 - UI - kenyamanan]
+        L1{Punya permission?<br/>cek cache authorization}
+    end
+    L1 -- tidak --> NA[/Halaman NoAccess<br/>'Anda tidak memiliki akses'/]
+    L1 -- ya --> L2
+
+    subgraph L2box [Lapis 2 - Middleware server - GERBANG UTAMA]
+        L2{can: permission<br/>+ user boleh tenant ini?}
+    end
+    L2 -- tidak --> R403[/HTTP 403 Forbidden/]
+    L2 -- ya --> L3
+
+    subgraph L3box [Lapis 3 - Query scope - isolasi data]
+        L3[BelongsToTenant global scope<br/>WHERE proyek_id IN accessible_ids]
+    end
+    L3 --> OK([Data hanya milik tenant user])
+
+    classDef deny fill:#ffe0e0,stroke:#c0392b,color:#000;
+    classDef ok fill:#e0ffe0,stroke:#27ae60,color:#000;
+    class NA,R403 deny;
+    class OK ok;

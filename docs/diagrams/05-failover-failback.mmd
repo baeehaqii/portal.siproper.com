@@ -1,0 +1,30 @@
+stateDiagram-v2
+    direction LR
+    [*] --> NORMAL
+
+    NORMAL: 1. NORMAL
+    NORMAL: VPS1 = PRIMARY (write-master)
+    NORMAL: VPS2 = replica + ikut load balancing
+    NORMAL: replikasi VPS1 -> VPS2
+
+    FAILOVER: 2. FAILOVER (otomatis)
+    FAILOVER: VPS1 mati -> health check gagal
+    FAILOVER: VPS2 dipromosikan jadi PRIMARY
+    FAILOVER: LB arahkan SEMUA traffic ke VPS2
+    FAILOVER: user login ulang (sesi hilang)
+
+    RECOVERY: 3. RECOVERY
+    RECOVERY: VPS1 online kembali
+    RECOVERY: VPS1 rejoin sebagai REPLICA dari VPS2
+    RECOVERY: catch-up data (anti split-brain)
+
+    FAILBACK: 4. FAILBACK
+    FAILBACK: data tersinkron penuh
+    FAILBACK: promote VPS1 -> PRIMARY lagi
+    FAILBACK: VPS2 kembali jadi replica + LB
+
+    NORMAL --> FAILOVER: VPS1 DOWN<br/>(health check gagal N kali)
+    FAILOVER --> RECOVERY: VPS1 ONLINE lagi
+    RECOVERY --> FAILBACK: sinkronisasi selesai<br/>(jendela traffic rendah)
+    FAILBACK --> NORMAL: kembali ke skema awal
+    FAILOVER --> FAILOVER: VPS2 layani semua<br/>selama VPS1 belum pulih

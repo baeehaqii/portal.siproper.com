@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    actor U as Browser (User)
+    participant P as Portal (BFF)
+    participant I as sys2 — IdP<br/>(auth.siproper.com)
+    participant S1 as sys1
+
+    rect rgb(235, 245, 255)
+    note over U,I: A. Login pertama (sekali ketik kredensial)
+    U->>P: Buka Portal
+    note left of P: Generate PKCE verifier + state<br/>SIMPAN di Redis · cookie pre-sesi __Host-
+    P-->>U: 302 → /oauth/authorize<br/>(client=portal, PKCE challenge, state)
+    U->>I: Ikuti redirect ke IdP
+    note right of I: Belum ada sesi IdP
+    I-->>U: Tampilkan FORM LOGIN (email, password, 2FA)
+    U->>I: Submit kredensial
+    note right of I: Verifikasi via Fortify<br/>set cookie sesi IdP (.siproper.com)
+    I-->>U: 302 → Portal/callback?code=…&state=…
+    U->>P: Antar code ke Portal BFF
+    note left of P: Validasi state dari record Redis (bukan cookie)
+    P->>I: POST /oauth/token (code + verifier)
+    I-->>P: access_token (aud=portal) + refresh<br/>(RS256, public key statis)
+    note left of P: Set cookie sesi Portal (httpOnly)
+    P-->>U: Tampilkan dashboard menu
+    end
+
+    rect rgb(235, 255, 235)
+    note over U,S1: B. Klik kartu "Sales" → deep-link ke modul di sys1 (SILENT, tanpa form login)
+    U->>S1: Klik kartu "Sales" → GET sys1/sales (deep-link modul)
+    S1-->>U: 302 → /oauth/authorize (client=sys1, PKCE, state)
+    U->>I: Ikuti redirect ke IdP
+    note right of I: Sesi IdP SUDAH ADA<br/>(cookie .siproper.com) → auto-approve
+    I-->>U: 302 → sys1/callback?code=… (tanpa form)
+    U->>S1: Antar code ke sys1 (set sesi sys1)
+    S1->>I: POST /oauth/token (code + verifier)
+    I-->>S1: access_token (aud=sys1) + refresh (RS256)
+    note right of S1: Verifikasi via oauth-public.key statis<br/>Cek permission + tenant (gating 3 lapis)<br/>user sales → boleh
+    S1-->>U: Tampilkan halaman modul Sales<br/>(sesuai role & akses tenant)
+    note over U,S1: Klik modul sys1 berikutnya: pakai sesi sys1, tanpa jabat-tangan lagi
+    end

@@ -1,0 +1,60 @@
+flowchart TB
+    NET([Internet / User]) --> LB[Load Balancer<br/>*.siproper.com + TLS]
+
+    subgraph VPS1 [VPS1 - Utama write-master]
+        A1[Portal + sys1 + sys2<br/>node aktif]
+        DBP[(MySQL PRIMARY<br/>read + WRITE)]
+        RED[(Redis PUSAT<br/>sesi BFF + sesi IdP)]
+    end
+
+    subgraph VPS2 [VPS2 - Replika + ikut load balancing]
+        A2[Portal + sys1 + sys2<br/>node aktif]
+        DBR[(MySQL REPLICA<br/>read-only)]
+    end
+
+    LB --> A1
+    LB --> A2
+    A1 -- "read + write" --> DBP
+    A2 -- "READ saja" --> DBR
+    A2 == "WRITE OAuth (code/token/refresh/revoke) lintas-VPS" ==> DBP
+    A1 -- "sesi" --> RED
+    A2 -- "sesi" --> RED
+    DBP -. "replikasi async (cut-off 23:59 WIB utk backup)" .-> DBR
+    DBP -. "FAILOVER: promote replica jadi primary" .-> DBR
+
+    DBP ~~~ LEG
+    DBR ~~~ LEG
+    subgraph LEG [Keterangan Garis]
+        direction LR
+        d1(( )) -->|Distribusi traffic LB| d2(( ))
+        r1(( )) -->|Read DB| r2(( ))
+        w1(( )) ==>|Write OAuth ke PRIMARY| w2(( ))
+        s1(( )) -->|Sesi ke Redis| s2(( ))
+        p1(( )) -.->|Replikasi async| p2(( ))
+        f1(( )) -.->|Failover| f2(( ))
+    end
+
+    %% urutan link: 0 user>LB |1,2 distribusi |3 rw |4 read |5 WRITE |6,7 sesi |8 replikasi |9 failover |10,11 invisible posisi |12-17 legenda
+    linkStyle 0 stroke:#334155,stroke-width:2px;
+    linkStyle 1,2 stroke:#2563eb,stroke-width:3px;
+    linkStyle 3,4 stroke:#16a34a,stroke-width:2.5px;
+    linkStyle 5 stroke:#dc2626,stroke-width:4px;
+    linkStyle 6,7 stroke:#9333ea,stroke-width:2.5px;
+    linkStyle 8 stroke:#ea580c,stroke-width:2.5px;
+    linkStyle 9 stroke:#64748b,stroke-width:2px;
+    linkStyle 10,11 stroke-width:0px;
+    linkStyle 12 stroke:#2563eb,stroke-width:3px;
+    linkStyle 13 stroke:#16a34a,stroke-width:2.5px;
+    linkStyle 14 stroke:#dc2626,stroke-width:4px;
+    linkStyle 15 stroke:#9333ea,stroke-width:2.5px;
+    linkStyle 16 stroke:#ea580c,stroke-width:2.5px;
+    linkStyle 17 stroke:#64748b,stroke-width:2px;
+
+    classDef primary fill:#dcfce7,stroke:#16a34a,color:#000;
+    classDef replica fill:#ffedd5,stroke:#ea580c,color:#000;
+    classDef cache fill:#f3e8ff,stroke:#9333ea,color:#000;
+    classDef dot fill:#fff,stroke:#94a3b8,color:#475569;
+    class DBP primary;
+    class DBR replica;
+    class RED cache;
+    class d1,d2,r1,r2,w1,w2,s1,s2,p1,p2,f1,f2 dot;
