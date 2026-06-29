@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { CheckCircle2, ArrowLeft, Clock } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
+import ReturnButton from "./ReturnButton";
 
 type Summary = {
   totals: Record<string, number>; // module => minutes
@@ -87,13 +87,7 @@ export default async function LogoutSuccess({ searchParams }: { searchParams: Pr
           </div>
         )}
 
-        <Link
-          href="/"
-          className="mt-7 inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-        >
-          <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-          Kembali ke Portal
-        </Link>
+        <ReturnButton />
       </div>
     </main>
   );
