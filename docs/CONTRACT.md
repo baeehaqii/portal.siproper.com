@@ -1,6 +1,7 @@
-# Kontrak SSO SiProper — v1.1 (BEKU)
+# Kontrak SSO SiProper — v2 (BEKU)
 
 > Status: **BEKU per 2026-06-23.** Acuan tetap untuk Portal, sys2 (IdP), sys1.
+> **v2 (2026-06-25):** host IdP **resmi `sys2.siproper.com`** — rencana host khusus `auth.siproper.com` DIBATALKAN (tanpa alias DNS). Semua endpoint OAuth/API + form login disajikan langsung dari `sys2.siproper.com`. `redirect_uri` & `SSO_IDP_URL` client pakai host ini. Konsekuensi: tak ada decoupling host IdP (kalau IdP dipindah kelak, `redirect_uri` semua client wajib didaftar ulang).
 > **v1.1 (2026-06-24):** klaim `iss` dijadikan **opsional** — Passport+league 8.5.5 tak memancarkannya; keamanan issuer dijamin signature RS256 vs `oauth-public.key` statis + validasi `aud`. Lihat bagian 2.
 > Perubahan apa pun pada kontrak ini = **naik versi (v2)** + kabari semua tim. Jangan ubah diam-diam.
 > Sumber desain: [`ARCHITECTURE_SSO.md`](../ARCHITECTURE_SSO.md). Dokumen ini = bagian yang dibekukan agar 3 tim bisa jalan paralel.
@@ -11,12 +12,12 @@
 
 | Nama | Peran | Host | Client ID OAuth |
 |---|---|---|---|
-| sys2 (IdP) | Authorization Server + Resource Server | `auth.siproper.com` | — |
+| sys2 (IdP) | Authorization Server + Resource Server | `sys2.siproper.com` | — |
 | Portal | OAuth client (BFF) | `portal.siproper.com` | `portal` |
 | sys1 | OAuth client + Resource Server | `sys1.siproper.com` | `sys1` |
 
-- `issuer` (klaim `iss` token) = `https://auth.siproper.com`
-- Semua endpoint OAuth & API disajikan dari `auth.siproper.com`.
+- `issuer` (klaim `iss` token) = `https://sys2.siproper.com`
+- Semua endpoint OAuth & API disajikan dari `sys2.siproper.com`.
 
 ---
 
@@ -65,7 +66,7 @@ Respons:
 Klaim minimal:
 | Klaim | Arti |
 |---|---|
-| `iss` | *(opsional, v1.1)* `https://auth.siproper.com` — **tidak dipancarkan** oleh Passport saat ini; jangan diwajibkan |
+| `iss` | *(opsional, v1.1)* `https://sys2.siproper.com` — **tidak dipancarkan** oleh Passport saat ini; jangan diwajibkan |
 | `sub` | user UUID |
 | `aud` | client penerima: `portal` **atau** `sys1` |
 | `exp` | kedaluwarsa (epoch) |
@@ -75,7 +76,7 @@ Klaim minimal:
 ### 2.2 Aturan validasi (WAJIB di setiap resource server)
 Tolak request bila salah satu gagal:
 1. Tanda tangan tidak valid terhadap `oauth-public.key`.
-2. *(opsional, v1.1)* Jika `iss` ada, harus `https://auth.siproper.com`. **Tidak dipancarkan saat ini → jangan jadikan syarat wajib** (signature vs key statis sudah memastikan issuer).
+2. *(opsional, v1.1)* Jika `iss` ada, harus `https://sys2.siproper.com`. **Tidak dipancarkan saat ini → jangan jadikan syarat wajib** (signature vs key statis sudah memastikan issuer).
 3. `exp` sudah lewat (toleransi clock skew ≤ 60 dtk; NTP wajib sinkron).
 4. **`aud` bukan milik dirinya** — sys1 hanya menerima `aud=sys1`; Portal hanya `aud=portal`. **Token lintas-`aud` ditolak.**
 
@@ -96,7 +97,7 @@ Satu-satunya sumber role, permission, dan tenant. **sys2 pemilik tunggal**; Port
 
 ### 3.1 Request
 ```
-GET https://auth.siproper.com/api/me/authorization
+GET https://sys2.siproper.com/api/me/authorization
 Authorization: Bearer <access_token>   # scope harus mengandung "authz"
 ```
 

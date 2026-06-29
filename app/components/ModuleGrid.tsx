@@ -46,8 +46,19 @@ export type AuthState = {
   roles: string[];
 };
 
-export default function ModuleGrid({ auth }: { auth: AuthState }) {
-  const [modal, setModal] = useState<{ title: string; next: string } | null>(null);
+const titleForModule = (key: string | null) =>
+  MENUS.find((m) => m.module === key)?.title ?? "Portal SiProper";
+
+export default function ModuleGrid({
+  auth,
+  initialSignin = null,
+}: {
+  auth: AuthState;
+  initialSignin?: { next: string; module: string | null } | null;
+}) {
+  const [modal, setModal] = useState<{ title: string; next: string } | null>(
+    initialSignin ? { title: titleForModule(initialSignin.module), next: initialSignin.next } : null,
+  );
   const isSuper = auth.roles.includes("super_admin");
 
   // sys2 deep-links go through the Portal handoff (/api/go) so the form-login

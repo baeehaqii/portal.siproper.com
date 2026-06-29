@@ -19,3 +19,15 @@ export function isAllowedNext(next: string): boolean {
     return false;
   }
 }
+
+// Logged-out deep-link recovery: when a not-authenticated user clicks a module,
+// send them to the Portal home with the login MODAL open (not sys2's /oauth/authorize,
+// which dead-ends at sys2's login page when the sys2 web session is gone — e.g. right
+// after a sys2-side logout that revoked the Portal token). `next` resumes the deep-link
+// after login; `m` lets the modal name the module the user wanted.
+export function signinPath(next: string, moduleKey?: string): string {
+  const q = new URLSearchParams({ signin: "1" });
+  if (isAllowedNext(next)) q.set("next", next);
+  if (moduleKey) q.set("m", moduleKey);
+  return `/?${q}`;
+}

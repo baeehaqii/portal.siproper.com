@@ -36,6 +36,12 @@ export default function AuthModal({
   const [loading, setLoading] = useState<"form" | "sso" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const captchaRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // createPortal targets document.body, which only exists on the client. When the
+  // modal is opened on the initial render (initialSignin, after a logged-out deep-link),
+  // rendering the portal during SSR would throw. Defer to after mount.
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -119,6 +125,8 @@ export default function AuthModal({
 
   const busy = loading !== null;
   const captchaRequired = !!SITE_KEY;
+
+  if (!mounted) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4" role="dialog" aria-modal aria-label="Masuk">

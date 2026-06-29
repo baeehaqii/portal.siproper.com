@@ -173,8 +173,10 @@ export type Authorization = {
   fetched_at: string;
 };
 
-// CONTRACT §3.3: short-TTL cache so revocation propagates within ≤120s.
-const AUTHZ_TTL_SEC = 60;
+// CONTRACT §3.3: short-TTL cache so revocation propagates fast. Kept low (15s,
+// well under the ≤120s ceiling) so a sys2-side logout (which revokes the token)
+// is reflected in the Portal UI within seconds.
+const AUTHZ_TTL_SEC = 15;
 // Keyed by access-token hash — a refresh rotates the token and so naturally
 // invalidates the cache. Hash, not the raw token, to keep tokens out of keys.
 const authzKey = (token: string) => "authz:" + createHash("sha256").update(token).digest("hex");
@@ -188,7 +190,7 @@ const authzKey = (token: string) => "authz:" + createHash("sha256").update(token
  * ponytail: no §4 grace/fail-closed — that's normative for resource servers
  * doing destructive writes; Portal only reads (UI gating), so it's moot here.
  */
-export async function fetchAuthorization(): Promise<Authorization | null> {
+export async function fetchAuthorization(opts?: { fresh?: boolean }): Promise<Authorization | null> {
   const session = await getSession();
   if (!session.accessToken) return null;
 
@@ -211,8 +213,13 @@ export async function fetchAuthorization(): Promise<Authorization | null> {
     if (!(await applyRefresh())) return null;
   }
 
-  const cached = await kvGet(authzKey(session.accessToken));
-  if (cached) return JSON.parse(cached) as Authorization;
+  // `fresh` bypasses the short cache so a caller about to take an action (e.g.
+  // /api/go minting a session handoff) re-validates the token against sys2 and
+  // cannot act on a token that was just revoked by a sys2-side logout.
+  if (!opts?.fresh) {
+    const cached = await kvGet(authzKey(session.accessToken));
+    if (cached) return JSON.parse(cached) as Authorization;
+  }
 
   const get = (token: string) =>
     fetch(`${sso.issuer}/api/me/authorization`, {

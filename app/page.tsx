@@ -11,14 +11,26 @@ import Reveal from "./components/Reveal";
 import BrandMark from "./components/BrandMark";
 import ModuleGrid from "./components/ModuleGrid";
 import { fetchAuthorization } from "@/lib/sso";
+import { isAllowedNext } from "@/lib/targets";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ signin?: string; next?: string; m?: string }>;
+}) {
   const authz = await fetchAuthorization();
   const auth = {
     authenticated: !!authz,
     modules: authz?.modules ?? {},
     roles: authz?.roles ?? [],
   };
+
+  // Logged-out deep-link recovery (from /api/go): open the login modal on load.
+  const sp = await searchParams;
+  const initialSignin =
+    sp.signin === "1" && !auth.authenticated
+      ? { next: sp.next && isAllowedNext(sp.next) ? sp.next : "/", module: sp.m ?? null }
+      : null;
 
   return (
     <main className="relative">
@@ -108,7 +120,7 @@ export default async function Home() {
           </Reveal>
 
           {/* Launcher: cards gate by role; click → login modal (SSO) → deep-link. */}
-          <ModuleGrid auth={auth} />
+          <ModuleGrid auth={auth} initialSignin={initialSignin} />
         </div>
       </section>
 
